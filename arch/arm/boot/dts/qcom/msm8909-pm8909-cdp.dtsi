@@ -13,7 +13,7 @@
 
 &pm8909_chg {
 	status = "ok";
-	qcom,charging-disabled;
+	/* qcom,charging-disabled; will.shao */
 };
 
 &pm8909_bms {

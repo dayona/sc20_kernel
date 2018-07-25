@@ -13,8 +13,14 @@
 #include "msm8909.dtsi"
 #include "msm8909-pinctrl.dtsi"
 #include "msm8909-camera-sensor-mtp.dtsi"
+#include "msm8909-regulator.dtsi"
 
 &soc {
+       gpio-clock {
+               compatible = "qcom,gpio_clk";
+               pwm-gpio = <31>;
+       };
+
 	/*
 	 * DT node to add support for SMB135x charger and integrate
 	 * with VM-BMS.
@@ -63,23 +69,47 @@
 	};
 
 	i2c@78b9000 { /* BLSP1 QUP5 */
-		synaptics@20 {
-			compatible = "synaptics,dsx";
-			reg = <0x20>;
+		goodix@5d {
+			compatible = "goodix,gt9xx";
+			reg = <0x5d>;
 			interrupt-parent = <&msm_gpio>;
 			interrupts = <13 0x2008>;
-			avdd-supply = <&pm8909_l17>;
-			vdd-supply = <&pm8909_l6>;
-			/* pins used by touchscreen */
-			pinctrl-names = "pmx_ts_active","pmx_ts_suspend","pmx_ts_release";
+			reset-gpios = <&msm_gpio 12 0x0>;
+			interrupt-gpios = <&msm_gpio 13 0x2008>;
+			power-gpios = <&msm_gpio 23 0x0>;
+			vcc-i2c-supply = <&pm8909_l6>;
+			goodix,panel-coords = <0 0 719 1405>;
+			goodix,display-coords = <0 0 719 1279>;
+			goodix,button-map= <139 172 158>;
+			goodix,enable-power-off;
+			//goodix,product-id = "9147";       joseph modified  20160309
+			goodix,fw_name = "gtp_fw.bin";
+			pinctrl-names = "pmx_ts_active","pmx_ts_suspend";
 			pinctrl-0 = <&ts_int_active &ts_reset_active>;
 			pinctrl-1 = <&ts_int_suspend &ts_reset_suspend>;
-			pinctrl-2 = <&ts_release>;
-			synaptics,irq-gpio = <&msm_gpio 13 0x2008>;
-			synaptics,reset-gpio = <&msm_gpio 12 0x0>;
-			synaptics,disable-gpios;
-			synaptics,display-coords = <0 0 719 1279>;
-			synaptics,panel-coords = <0 0 719 1405>;
+			goodix,cfg-data0 = [
+			44 DA 02 05 05 05 35 C1 01 09
+			28 08 48 35 03 05 00 00 FF 7F
+			10 50 85 14 17 1A 14 92 00 0A
+			31 2F D3 07 03 00 00 A2 33 1D
+			00 01 00 00 00 1E 00 09 10 00
+			2A 1E 50 94 C5 02 00 0E 00 04
+			B1 21 00 96 28 00 7F 31 00 6F
+			3B 00 60 48 00 60 10 30 48 00
+			F0 4A 3A FF EF 27 00 00 00 00
+			00 01 1C 19 17 0F 01 00 01 0F
+			0F 03 04 10 42 8F 0F 19 00 00
+			46 37 08 0A 0C 0E 10 12 14 16
+			18 1A 00 00 00 00 00 00 00 00
+			00 00 00 00 00 00 00 00 00 00
+			00 00 08 20 0A 1F 0C 1E 0E 1D
+			22 05 24 04 28 00 29 02 2A 06
+			00 00 00 00 00 00 00 00 00 00
+			00 FF FF FF FF FF FF FF FF AF
+			FF FF FF FF 87 01
+			];
+			goodix,have-touch-key;
+			goodix,driver-send-cfg;
 		};
 	};
 
@@ -137,10 +167,10 @@
 
 		camera_focus {
 			label = "camera_focus";
-			gpios = <&msm_gpio 91 0x1>;
+			gpios = <&msm_gpio 93 0x1>;
 			linux,input-type = <1>;
 			linux,code = <0x210>;
-			gpio-key,wakeup;
+		//	gpio-key,wakeup;	//law:del for system sleep abnormal,before modify sleep-current is 22mA ,after sleep-current is 7mA 2015-12-19
 			debounce-interval = <15>;
 		};
 
@@ -161,6 +191,41 @@
 			gpio-key,wakeup;
 			debounce-interval = <15>;
 		};
+
+		vol_down {
+			label = "volume_down";
+			gpios = <&msm_gpio 91 0x1>;
+			linux,input-type = <1>;
+			linux,code = <114>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+		};
+		home {
+			label = "home";
+			gpios = <&msm_gpio 11 0x1>;
+			linux,input-type = <1>;
+			linux,code = <102>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+		};
+
+		menu {
+			label = "menu";
+			gpios = <&msm_gpio 17 0x1>;
+			linux,input-type = <1>;
+			linux,code = <139>;
+		//	gpio-key,wakeup;    //law:del for system sleep abnormal,before modify sleep-current is 22mA ,after sleep-current is 7mA 2015-12-19
+			debounce-interval = <15>;
+		};
+
+		back {
+			label = "back";
+			gpios = <&msm_gpio 98 0x1>;
+			linux,input-type = <1>;
+			linux,code = <158>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+		};
 	};
 
 	audio_codec_mtp: sound {
@@ -170,7 +235,7 @@
 		qcom,msm-codec-type = "internal";
 		qcom,msm-ext-pa = "primary";
 		qcom,msm-mclk-freq = <9600000>;
-		qcom,msm-mbhc-hphl-swh = <0>;
+		qcom,msm-mbhc-hphl-swh = <1>;		/*joseph modified*/
 		qcom,msm-mbhc-gnd-swh = <0>;
 		qcom,msm-hs-micbias-type = "internal";
 		qcom,msm-micbias1-ext-cap;
@@ -178,20 +243,18 @@
 			"RX_BIAS", "MCLK",
 			"SPK_RX_BIAS", "MCLK",
 			"INT_LDO_H", "MCLK",
-			"MIC BIAS External", "Handset Mic",
+			"MIC BIAS Internal1", "Handset Mic",		/**joseph modified for internal bias**/
 			"MIC BIAS Internal2", "Headset Mic",
-			"MIC BIAS External", "Secondary Mic",
-			"AMIC1", "MIC BIAS External",
+			"MIC BIAS Internal1", "Secondary Mic",
+			"AMIC1", "MIC BIAS Internal1",
 			"AMIC2", "MIC BIAS Internal2",
-			"AMIC3", "MIC BIAS External";
+			"AMIC3", "MIC BIAS Internal1";
 		pinctrl-names = "cdc_lines_act",
 				"cdc_lines_sus",
 				"cross_conn_det_act",
-				"cross_conn_det_sus",
-				"vdd_spkdrv_act",
-				"vdd_spkdrv_sus";
-		pinctrl-0 = <&cdc_pdm_lines_act &vdd_spkdrv_act>;
-		pinctrl-1 = <&cdc_pdm_lines_sus &vdd_spkdrv_sus>;
+				"cross_conn_det_sus";
+		pinctrl-0 = <&cdc_pdm_lines_act>;
+		pinctrl-1 = <&cdc_pdm_lines_sus>;
 		pinctrl-2 = <&cross_conn_det_act>;
 		pinctrl-3 = <&cross_conn_det_sus>;
 		qcom,cdc-us-euro-gpios = <&msm_gpio 97 0>;
@@ -233,9 +296,16 @@
 };
 
 &blsp1_uart1 {
-	status = "disabled";
+	status = "ok";
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart_console_sleep>;
+};
+
+ /*add by evan.hai for ttyHSL1*/
+&blsp1_uart2 {
+        status = "ok";
+        pinctrl-names = "default";
+        pinctrl-0 = <&uart_console_sleep1>;
 };
 
 / {
@@ -287,7 +357,16 @@
 
 	status = "ok";
 };
+//law---2016.4.14-11:47----modify for usb otg-------
 
+&usb_otg {
+        interrupts = <0 134 0>,<0 140 0>,<0 136 0>;
+        interrupt-names = "core_irq", "async_irq", "phy_irq";
+
+        qcom,hsusb-otg-mode = <3>;
+        vbus_otg-supply = <&oem_otg_ext_vreg>;
+};
+//------------------end-----------------------------
 &sdhc_2 {
 	 #address-cells = <0>;
 	interrupt-parent = <&sdhc_2>;
@@ -420,6 +499,26 @@
 		ak,layout = <0x6>;
 		ak,auto-report;
 	};
+
+	stk@48 {/*law modify for p-sensor--------2015.11.18-13:07*/
+	  compatible = "stk,stk3x1x";
+	  reg = <0x48>;
+	  interrupt-parent = <&msm_gpio>;
+	  interrupts = <94 0x2>;
+	  vdd-supply = <&pm8909_l17>;
+	  vio-supply = <&pm8909_l6>;
+	  stk,irq-gpio = <&msm_gpio 94 0x02>;
+	  stk,transmittance = <500>;
+	  stk,state-reg = <0x00>;
+	  stk,psctrl-reg = <0x71>;
+	  stk,alsctrl-reg = <0x38>;
+	  stk,ledctrl-reg = <0xFF>;
+	  stk,wait-reg = <0x07>;
+	  stk,ps-thdh = <1700>;
+	  stk,ps-thdl = <1500>;
+	  stk,use-fir;
+	 };
+
 };
 
 #include "dsi-panel-auo-qvga-cmd.dtsi"
@@ -427,9 +526,18 @@
 #include "dsi-panel-hx8394d-480p-video.dtsi"
 #include "dsi-panel-hx8394d-720p-video.dtsi"
 #include "dsi-panel-hx8394d-qhd-video.dtsi"
+#include "dsi-panel-ili9881c-720p-video.dtsi"
 
 &mdss_mdp {
 	qcom,mdss-pref-prim-intf = "dsi";
+};
+
+&dsi_ili9881c_720p_video {
+        qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_pwm";
+        qcom,mdss-dsi-bl-pmic-pwm-frequency = <100>;
+        qcom,mdss-dsi-bl-pmic-bank-select = <0>;
+        qcom,mdss-dsi-pwm-gpio = <&pm8909_mpps 2 0>;
+        qcom,cont-splash-enabled;
 };
 
 &dsi_auo_cx_qvga_cmd {
@@ -474,7 +582,7 @@
 
 &pmx_mdss {
 	qcom,num-grp-pins = <2>;
-	qcom,pins = <&gp 25>, <&gp 37>;
+	qcom,pins = <&gp 25>, <&gp 95>;
 };
 
 &pmx_mdss_te {
@@ -483,13 +591,14 @@
 };
 
 &mdss_dsi0 {
-	qcom,dsi-pref-prim-pan = <&dsi_hx8394d_720_vid>;
+	qcom,dsi-pref-prim-pan = <&dsi_ili9881c_720p_video>;
 	pinctrl-names = "mdss_default", "mdss_sleep";
 	pinctrl-0 = <&mdss_dsi_active &mdss_te_active>;
 	pinctrl-1 = <&mdss_dsi_suspend &mdss_te_suspend>;
 
+	qcom,platform-enable-gpio = <&msm_gpio 95 0>;
 	qcom,platform-reset-gpio = <&msm_gpio 25 0>;
-	qcom,platform-bklight-en-gpio = <&msm_gpio 37 0>;
+	//qcom,platform-bklight-en-gpio = <&msm_gpio 37 0>;
 };
 
 /* CoreSight */

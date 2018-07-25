@@ -17,6 +17,9 @@
 			avdd-supply = <&pm8916_l17>;
 			vdd-supply = <&pm8916_l6>;
 		};
+		goodix@5d {
+			vcc-i2c-supply = <&pm8916_l6>;
+		};
 	};
 
 	i2c@78b6000 {
@@ -67,6 +70,11 @@
 		vdd-supply = <&pm8916_l17>;
 		vio-supply = <&pm8916_l6>;
 	};
+
+	stk@48 {/*law modify for p-sensor--------2015.11.18-13:07*/
+		vdd-supply = <&pm8916_l17>;
+		vio-supply = <&pm8916_l6>;
+	};
 };
 
 &i2c_3 {
@@ -93,6 +101,10 @@
 		cam_vana-supply = <&pm8916_l10>;
 		cam_vio-supply = <&pm8916_l6>;
 	};
+};
+
+&dsi_ili9881c_720p_video {
+	qcom,mdss-dsi-pwm-gpio = <&pm8916_mpps 4 0>;
 };
 
 &dsi_auo_qvga_cmd {

@@ -1441,6 +1441,8 @@ struct subsys_device *subsys_register(struct subsys_desc *desc)
 	subsys->dev.release = subsys_device_release;
 	subsys->notif_state = -1;
 	subsys->desc->sysmon_pid = -1;
+	//will.shao, enable ssr default
+	subsys->restart_level = RESET_SUBSYS_COUPLED;
 
 	subsys->notify = subsys_notif_add_subsys(desc->name);
 

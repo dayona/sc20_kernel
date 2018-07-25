@@ -51,7 +51,8 @@
 #define MMC3416X_DEFAULT_INTERVAL_MS	100
 #define MMC3416X_TIMEOUT_SET_MS	15000
 
-#define MMC3416X_PRODUCT_ID	0x06
+//#define MMC3416X_PRODUCT_ID	0x06 // change zahi for mmc3524
+#define MMC3416X_PRODUCT_ID	0x08
 
 /* POWER SUPPLY VOLTAGE RANGE */
 #define MMC3416X_VDD_MIN_UV	2000000
@@ -496,6 +497,7 @@ static int mmc3416x_check_device(struct mmc3416x_data *memsic)
 
 	}
 
+	printk("mmc3524 check id data = %d\n",data);
 	if (data != MMC3416X_PRODUCT_ID)
 		return -ENODEV;
 

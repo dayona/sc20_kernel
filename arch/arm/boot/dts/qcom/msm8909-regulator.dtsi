@@ -277,4 +277,16 @@
 		enable-active-high;
 		gpio = <&msm_gpio 4 0>;
 	};
+
+//law add for otg 2016-4-14
+	oem_otg_ext_vreg: oem_otg_ext_vreg { 
+		compatible = "regulator-fixed"; 
+		regulator-name = "oem_otg_ext_vreg"; 
+		gpio = <&msm_gpio 8 0x0>; 
+		status = "ok"; 
+		enable-active-high; 
+		pinctrl-names = "active"; 
+		pinctrl-0 = <&oem_otg_vreg_active>; 
+	}; 
+
 };
