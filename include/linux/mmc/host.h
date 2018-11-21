@@ -330,6 +330,7 @@ struct mmc_host {
 #define MMC_CAP2_CORE_PM       (1 << 24)       /* use PM framework */
 #define MMC_CAP2_HS400		(MMC_CAP2_HS400_1_8V | \
 				 MMC_CAP2_HS400_1_2V)
+#define MMC_CAP2_AWAKE_SUPP	(1 << 25)	/*law modify for  use CMD5 awake 2016-1-27 */
 #define MMC_CAP2_NONHOTPLUG	(1 << 25)	/*Don't support hotplug*/
 	mmc_pm_flag_t		pm_caps;	/* supported pm features */
 
@@ -356,6 +357,7 @@ struct mmc_host {
 	spinlock_t		lock;		/* lock for claim and bus ops */
 
 	struct mmc_ios		ios;		/* current io bus settings */
+	struct mmc_ios		cached_ios; /*law modify for  use CMD5 awake 2016-1-27 */
 	u32			ocr;		/* the current OCR setting */
 
 	/* group bitfields together to minimize padding */

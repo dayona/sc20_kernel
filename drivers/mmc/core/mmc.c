@@ -1720,7 +1720,7 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 					card->bkops_info.host_delay_ms;
 		}
 	}
-
+	memcpy(&host->cached_ios, &host->ios, sizeof(host->cached_ios));/*law modify for  use CMD5 awake 2016-1-27 */
 	return 0;
 
 free_card:
@@ -1874,6 +1874,41 @@ out:
 	return err;
 }
 
+/***************************law modify for  use CMD5 awake 2016-1-27 ***************************************/
+static int mmc_partial_init(struct mmc_host *host) 
+{ 
+        int err;
+        struct mmc_card *card = host->card;
+        u32 tuning_cmd;
+ 
+        pr_debug("%s: %s: bw: %d timing: %d clock: %d\n", mmc_hostname(host),
+        __func__, host->cached_ios.bus_width, host->cached_ios.timing,
+        host->cached_ios.clock); 
+ 
+        mmc_set_bus_width(host, host->cached_ios.bus_width);
+        mmc_set_timing(host, host->cached_ios.timing);
+        mmc_set_clock(host, host->cached_ios.clock); 
+  
+        if (host->ops->execute_tuning && (mmc_card_hs200(card) || 
+        mmc_card_hs400(card))) {
+        mmc_host_clk_hold(host);
+ 
+        if (mmc_card_hs200(card))
+        tuning_cmd = MMC_SEND_TUNING_BLOCK_HS200;
+        else if (mmc_card_hs400(card))
+        tuning_cmd = MMC_SEND_TUNING_BLOCK_HS400;
+ 
+        err = host->ops->execute_tuning(host,
+        tuning_cmd);
+ 
+        mmc_host_clk_release(host);
+        }
+        if (err)
+        pr_err("%s: tuning execution failed\n",
+        mmc_hostname(host));
+        return err;
+}
+/***************************law modify for  use CMD5 awake 2016-1-27 ***************************************/
 /*
  * Resume callback from host.
  *
@@ -1891,8 +1926,23 @@ static int mmc_resume(struct mmc_host *host)
 	mmc_claim_host(host);
 	retries = 3;
 	while (retries) {
-		err = mmc_init_card(host, host->ocr, host->card);
 
+/***************************law modify for  use CMD5 awake 2016-1-27 ***************************************/
+		//	err = mmc_init_card(host, host->ocr, host->card);//law
+		if (host->caps2 & MMC_CAP2_AWAKE_SUPP) {
+			err = mmc_card_awake(host);
+			if (err) {
+				pr_err("%s: %s: failed (%d) awake using CMD5\n", 
+						mmc_hostname(host), __func__, err);
+				err = mmc_init_card(host, host->ocr, host->card);
+			} else {
+				err = mmc_partial_init(host);
+			}
+		} else {
+			err = mmc_init_card(host, host->ocr, host->card);
+		}
+
+/***************************law modify for  use CMD5 awake 2016-1-27 ***************************************/
 		if (err) {
 			pr_err("%s: MMC card re-init failed rc = %d (retries = %d)\n",
 			       mmc_hostname(host), err, retries);

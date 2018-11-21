@@ -210,6 +210,7 @@ static enum power_supply_property msm_batt_power_props[] = {
 	POWER_SUPPLY_PROP_COOL_TEMP,
 	POWER_SUPPLY_PROP_WARM_TEMP,
 	POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL,
+	POWER_SUPPLY_PROP_MPP4_VOLTAGE, //luffy add 20151223
 };
 
 static char *pm_batt_supplied_to[] = {
@@ -1218,6 +1219,22 @@ static int get_prop_battery_voltage_now(struct qpnp_lbc_chip *chip)
 	return results.physical;
 }
 
+//luffy add 20151223
+static int get_prop_mpp4_voltage_now(struct qpnp_lbc_chip *chip)
+{
+	int rc = 0;
+	struct qpnp_vadc_result results;
+
+	rc = qpnp_vadc_read(chip->vadc_dev, P_MUX4_1_1, &results); //VBAT_SNS
+    //pr_info("%s read mpp4 voltage rc=%d\n", __func__, rc);
+	if (rc) {
+		pr_err("Unable to read mpp4 voltage rc=%d\n", rc);
+		return 0;
+	}
+
+	return results.physical;
+}
+
 static int get_prop_batt_present(struct qpnp_lbc_chip *chip)
 {
 	u8 reg_val;
@@ -1725,6 +1742,9 @@ static int qpnp_batt_power_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
 		val->intval = chip->therm_lvl_sel;
 		break;
+	case POWER_SUPPLY_PROP_MPP4_VOLTAGE:
+        val->intval=get_prop_mpp4_voltage_now(chip);
+        break;
 	default:
 		return -EINVAL;
 	}

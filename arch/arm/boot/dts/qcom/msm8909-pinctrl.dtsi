@@ -82,8 +82,8 @@
 
 		cam_sensor_rear {
 			/* RESET, STANDBY */
-			qcom,pins =  <&gp 35>, <&gp 34>;
-			qcom,num-grp-pins = <2>;
+			qcom,pins =  <&gp 35>, <&gp 34>, <&gp 9>, <&gp 10>, <&gp 110>, <&gp 97>;
+			qcom,num-grp-pins = <6>;
 			qcom,pin-func = <0>;
 			label = "cam-sensor-rear";
 			/* active state */
@@ -95,8 +95,8 @@
 
 		cam_sensor_rear_sleep {
 			/* RESET, STANDBY */
-			qcom,pins =  <&gp 35>, <&gp 34>;
-			qcom,num-grp-pins = <2>;
+			qcom,pins =  <&gp 35>, <&gp 34>, <&gp 9>, <&gp 10>, <&gp 110>, <&gp 97>;
+			qcom,num-grp-pins = <6>;
 			qcom,pin-func = <0>;
 			label = "cam-sensor-rear-sleep";
 			/*suspended state */
@@ -108,8 +108,8 @@
 
 		cam_sensor_front {
 			/* RESET, STANDBY */
-			qcom,pins = <&gp 28>, <&gp 33>, <&gp 95>, <&gp 99>, <&gp 17>;
-			qcom,num-grp-pins = <5>;
+			qcom,pins = <&gp 28>, <&gp 33>;
+			qcom,num-grp-pins = <2>;
 			qcom,pin-func = <0>;
 			label = "cam_sensor_front";
 			/* active state */
@@ -121,8 +121,8 @@
 
 		cam_sensor_front_sleep {
 			/* RESET, STANDBY */
-			qcom,pins = <&gp 28>, <&gp 33>, <&gp 95>, <&gp 99>, <&gp 17>;
-			qcom,num-grp-pins = <5>;
+			qcom,pins = <&gp 28>, <&gp 33>;
+			qcom,num-grp-pins = <2>;
 			qcom,pin-func = <0>;
 			label = "cam-sensor-front-sleep";
 			/* suspended state */
@@ -134,8 +134,8 @@
 
 		cam_sensor_flash {
 			/* FLASH_RESET,FLASH_EN,FLASH_NOW */
-			qcom,pins = <&gp 36>, <&gp 31>,<&gp 32> ;
-			qcom,num-grp-pins = <3>;
+			qcom,pins = <&gp 31>,<&gp 32> ;
+			qcom,num-grp-pins = <2>;
 			qcom,pin-func = <0>;
 			label = "cam_sensor_flash";
 			/* active state */
@@ -161,6 +161,21 @@
 			};
 		};
 
+           
+
+                /*add by evan.hai for ttyHSL1*/
+                pmx-uartconsole1 {
+                        qcom,pins = <&gp 20>, <&gp 21>;
+                        qcom,num-grp-pins = <2>;
+                        qcom,pin-func = <3>;
+                        label = "uart-console1";
+                        uart_console_sleep1: uart-console1 {
+                                drive-strength = <2>;
+                                bias-pull-up;
+                        };
+                };
+
+                
 		cdc-pdm-lines {
 			qcom,pins = <&gp 59>, <&gp 60>, <&gp 61>,
 					<&gp 62>, <&gp 63>, <&gp 64>;
@@ -954,6 +969,21 @@
 				drive-strength = <2>; /* 2 MA */
 			};
 		};
+
+//law---2016.4.14-11:47-----modify for usb otg ---------start
+
+oem_otg_vreg { 
+	qcom,pins = <&gp 8>; 
+	qcom,num-grp-pins = <1>; 
+	qcom,pin-func = <0>; 
+	label = "oem_otg_vreg_active"; 
+	oem_otg_vreg_active: oem_otg_vreg_active { 
+	drive-strength = <8>; 
+	bias-pull-up; 
+	}; 
+}; 
+//law---2016.4.14-11:47---------------end
+
 		spi0_active {
                         /* MOSI, MISO, CLK */
                         qcom,pins = <&gp 8>, <&gp 9>, <&gp 11>;
@@ -1192,9 +1222,9 @@
 		};
 
 		tlmm_gpio_key {
-			qcom,pins = <&gp 90>, <&gp 91>, <&gp 92>;
+			qcom,pins = <&gp 90>, <&gp 91>, <&gp 92>, <&gp 11>,  <&gp 17>,  <&gp 93>,  <&gp 98>;
 			qcom,pin-func = <0>;
-			qcom,num-grp-pins = <3>;
+			qcom,num-grp-pins = <7>;
 			label = "tlmm_gpio_key";
 			gpio_key_active: gpio_key_active {
 				drive-strength = <2>;

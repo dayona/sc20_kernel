@@ -90,7 +90,7 @@
 			<&clock_gcc clk_gcc_camss_mclk0_clk>;
 		clock-names = "cam_src_clk", "cam_clk";
 	};
-
+/************barnett delete
 	led_flash0: qcom,led-flash@60 {
 		cell-index = <0>;
 		reg = <0x60>;
@@ -113,7 +113,7 @@
 			"FLASH_NOW";
 		qcom,cci-master = <0>;
 	};
-
+***********/
 	qcom,camera@0 {
 		cell-index = <0>;
 		compatible = "qcom,camera";
@@ -122,7 +122,7 @@
 		qcom,csid-sd-index = <0>;
 		qcom,mount-angle = <90>;
 		qcom,actuator-src = <&actuator0>;
-		qcom,led-flash-src = <&led_flash0>;
+		//qcom,led-flash-src = <&led_flash0>;
 		qcom,eeprom-src = <&eeprom0>;
 		cam_vdig-supply = <&pm8916_l2>;
 		cam_vana-supply = <&pm8916_l17>;

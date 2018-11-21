@@ -13,7 +13,7 @@
 
 &pm8909_chg {
 	status = "ok";
-	qcom,charging-disabled;
+	/* qcom,charging-disabled; will */ 
 };
 
 &pm8909_bms {
@@ -24,7 +24,8 @@
 
 &spmi_bus {
 	qcom,pm8909@0 {
-		qcom,leds@a300 {
+		/*chapin:remove led mpp4, mpp4 is used as adc, so it can't be configured as current-sink*/
+	/*	qcom,leds@a300 {
 			status = "okay";
 			qcom,led_mpp_4 {
 				label = "mpp";
@@ -38,7 +39,7 @@
 				qcom,source-sel = <1>;
 				qcom,mode-ctrl = <0x60>;
 			};
-		};
+		};*/
 	};
 
 	qcom,pm8909@1 {
@@ -72,7 +73,7 @@
 
 	mpp@a300 { /* MPP 4 */
 		/* HR LED */
-		status = "disabled";
+		status = "ok";
 	};
 };
 

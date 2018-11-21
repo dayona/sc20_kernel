@@ -898,6 +898,9 @@ static int gtp_init_panel(struct goodix_ts_data *ts)
 				return -EINVAL;
 			}
 		}
+//joseph add 20160309
+		if(strcmp("9157",ts->pdata->product_id) == 0)
+			sensor_id = 1;
 
 		dev_info(&client->dev, "Sensor ID selected: %d", sensor_id);
 
@@ -1051,10 +1054,8 @@ static int gtp_check_product_id(struct i2c_client *client)
 	}
 
 	dev_info(&client->dev, "Goodix Product ID = %s\n", product_id);
-
-	ret = strcmp(product_id, ts->pdata->product_id);
-	if (ret != 0)
-		return -EINVAL;
+//joseph modified 20160309
+	strlcpy(ts->pdata->product_id, product_id, GTP_PRODUCT_ID_MAXSIZE);
 
 	return ret;
 }
@@ -1139,6 +1140,27 @@ static int gtp_request_io_port(struct goodix_ts_data *ts)
 		ret = -EINVAL;
 		goto err_free_irq_gpio;
 	}
+
+	if (gpio_is_valid(pdata->power_gpio)) {
+		ret = gpio_request(pdata->power_gpio, "goodix_power_en_gpio");
+		if (ret) {
+			dev_err(&client->dev, "Unable to request power_en gpio [%d]\n",
+				pdata->reset_gpio);
+			goto err_free_reset_gpio;
+		}
+		printk("##############   %d\n",pdata->power_gpio);
+		ret = gpio_direction_output(pdata->power_gpio, 1);
+		if (ret) {
+			dev_err(&client->dev, "Unable to set direction for power_en gpio [%d]\n",
+				pdata->reset_gpio);
+			goto err_free_power_gpio;
+		}
+	} else {
+		dev_err(&client->dev, "Invalid power gpio [%d]!\n",
+			pdata->power_gpio);
+		ret = -EINVAL;
+		goto err_free_reset_gpio;
+	}
 	/* IRQ GPIO is an input signal, but we are setting it to output
 	  * direction and pulling it down, to comply with power up timing
 	  * requirements, mentioned in power up timing section of device
@@ -1152,9 +1174,15 @@ static int gtp_request_io_port(struct goodix_ts_data *ts)
 	if (ret)
 		dev_warn(&client->dev,
 			"pull down reset gpio failed\n");
+	ret = gpio_direction_output(pdata->power_gpio, 1);
+	if (ret)
+		dev_warn(&client->dev,
+			"pull up power gpio failed\n");
 
 	return ret;
-
+err_free_power_gpio:
+	if (gpio_is_valid(pdata->power_gpio))
+		gpio_free(pdata->power_gpio);
 err_free_reset_gpio:
 	if (gpio_is_valid(pdata->reset_gpio))
 		gpio_free(pdata->reset_gpio);
@@ -1177,11 +1205,11 @@ Output:
 static int gtp_request_irq(struct goodix_ts_data *ts)
 {
 	int ret = 0;
-	const u8 irq_table[] = GTP_IRQ_TAB;
+	//const u8 irq_table[] = GTP_IRQ_TAB;
 
 	ret = request_threaded_irq(ts->client->irq, NULL,
 			goodix_ts_irq_handler,
-			irq_table[ts->int_trigger_type],
+			IRQ_TYPE_EDGE_FALLING|IRQ_TYPE_EDGE_RISING|IRQF_ONESHOT,
 			ts->client->name, ts);
 	if (ret) {
 		ts->use_irq = false;
@@ -1363,6 +1391,10 @@ static int goodix_power_on(struct goodix_ts_data *ts)
 			goto err_enable_vcc_i2c;
 			}
 	}
+    /*kyle:add 20170701*/
+    if (gpio_is_valid(ts->pdata->power_gpio)) {
+        gpio_set_value_cansleep(ts->pdata->power_gpio, 1);
+    }
 
 	ts->power_on = true;
 	return 0;
@@ -1434,6 +1466,10 @@ static int goodix_power_off(struct goodix_ts_data *ts)
 			dev_err(&ts->client->dev,
 				"Regulator avdd disable failed ret=%d\n", ret);
 	}
+    /*kyle:add 20170701*/
+    if (gpio_is_valid(ts->pdata->power_gpio)) {
+        gpio_set_value_cansleep(ts->pdata->power_gpio, 0);
+    }
 
 	ts->power_on = false;
 	return 0;
@@ -1869,13 +1905,19 @@ static int goodix_parse_dt(struct device *dev,
 	if (pdata->irq_gpio < 0)
 		return pdata->irq_gpio;
 
+	pdata->power_gpio= of_get_named_gpio_flags(np, "power-gpios",
+				0, &pdata->power_gpio_flags);
+	if (pdata->power_gpio < 0)
+		return pdata->power_gpio;
+	printk("%s    ###########    %d\n",__func__,pdata->power_gpio);
+/*   joseph modified 20160309
 	rc = of_property_read_string(np, "goodix,product-id",
 						&pdata->product_id);
 	if (rc && (rc != -EINVAL)) {
 		dev_err(dev, "Failed to parse product_id.");
 		return -EINVAL;
 	}
-
+*/
 	rc = of_property_read_string(np, "goodix,fw_name",
 						&pdata->fw_name);
 	if (rc && (rc != -EINVAL)) {
@@ -1930,6 +1972,48 @@ static int goodix_parse_dt(struct device *dev,
 
 	return 0;
 }
+
+static int goodix_ts_pinctrl_init(struct goodix_ts_data *goodix_data)  
+{
+    int retval;
+    goodix_data->ts_pinctrl = devm_pinctrl_get(&(goodix_data->client->dev));
+    if(IS_ERR_OR_NULL(goodix_data->ts_pinctrl))
+        {
+            retval = PTR_ERR(goodix_data->ts_pinctrl);
+            dev_err(&goodix_data->client->dev,"Target does not use pinctrl %d\n",retval);
+            goto err_pinctrl_get;
+        }
+    goodix_data->pinctrl_state_active = pinctrl_lookup_state(goodix_data->ts_pinctrl,PINCTRL_STATE_ACTIVE);
+
+    if(IS_ERR_OR_NULL(goodix_data->pinctrl_state_active))
+        {
+            retval = PTR_ERR(goodix_data->pinctrl_state_active);
+            dev_err(&goodix_data->client->dev,"Can not lookup %s pinstate %d\n",PINCTRL_STATE_ACTIVE,retval);
+            goto err_pinctrl_lookup;
+        }
+    goodix_data->pinctrl_state_suspend = pinctrl_lookup_state(goodix_data->ts_pinctrl,PINCTRL_STATE_SUSPEND);
+
+    if(IS_ERR_OR_NULL(goodix_data->pinctrl_state_suspend))
+        {
+            retval = PTR_ERR(goodix_data->pinctrl_state_suspend);
+            dev_err(&goodix_data->client->dev,"Can not lookup %s pinstate %d\n",PINCTRL_STATE_SUSPEND,retval);
+            goto err_pinctrl_lookup;
+        }
+    goodix_data->pinctrl_state_release = pinctrl_lookup_state(goodix_data->ts_pinctrl,PINCTRL_STATE_RELEASE);
+
+    if(IS_ERR_OR_NULL(goodix_data->pinctrl_state_release))
+        {
+            retval = PTR_ERR(goodix_data->pinctrl_state_release);
+            dev_err(&goodix_data->client->dev,"Can not lookup %s pinstate %d\n",PINCTRL_STATE_RELEASE,retval);
+        }
+    return 0;
+
+err_pinctrl_lookup:
+    devm_pinctrl_put(goodix_data->ts_pinctrl);
+err_pinctrl_get:
+    goodix_data->ts_pinctrl = NULL;
+    return retval;
+} 
 
 /*******************************************************
 Function:
@@ -2013,12 +2097,26 @@ static int goodix_ts_probe(struct i2c_client *client,
 		dev_err(&client->dev, "GTP power on failed\n");
 		goto exit_deinit_power;
 	}
+    
+    ret=goodix_ts_pinctrl_init(ts);
+    if(!ret && ts->ts_pinctrl){
+        ret=pinctrl_select_state(ts->ts_pinctrl,ts->pinctrl_state_active);
+        if(ret<0){
+            dev_err(&client->dev,"Failed to select %s pin to active state %d\n",PINCTRL_STATE_ACTIVE,ret);
+        }
+    }  
 
 	gtp_reset_guitar(ts, 20);
 
 	ret = gtp_i2c_test(client);
 	if (ret != 2) {
 		dev_err(&client->dev, "I2C communication ERROR!\n");
+		goto exit_power_off;
+	}
+//joseph modified 20160308
+	ret = gtp_check_product_id(client);
+	if (ret < 0) {
+		dev_err(&client->dev, "GTP Product id doesn't match.\n");
 		goto exit_power_off;
 	}
 
@@ -2070,6 +2168,7 @@ static int goodix_ts_probe(struct i2c_client *client,
 	ts->goodix_wq = create_singlethread_workqueue("goodix_wq");
 	INIT_WORK(&ts->work, goodix_ts_work_func);
 
+	ts->client->irq = gpio_to_irq(pdata->irq_gpio);
 	ret = gtp_request_irq(ts);
 	if (ret)
 		dev_info(&client->dev, "GTP request irq failed %d.\n", ret);
@@ -2080,11 +2179,6 @@ static int goodix_ts_probe(struct i2c_client *client,
 	if (ret != 2)
 		dev_err(&client->dev, "GTP firmware version read failed.\n");
 
-	ret = gtp_check_product_id(client);
-	if (ret != 0) {
-		dev_err(&client->dev, "GTP Product id doesn't match.\n");
-		goto exit_free_irq;
-	}
 	if (ts->use_irq)
 		gtp_irq_enable(ts);
 
@@ -2176,7 +2270,8 @@ static int goodix_ts_remove(struct i2c_client *client)
 #endif
 
 #if GTP_ESD_PROTECT
-	cancel_work_sync(gtp_esd_check_workqueue);
+	//cancel_work_sync(gtp_esd_check_workqueue);  joseph modified  2015.11.30
+	cancel_delayed_work_sync(&gtp_esd_check_work);
 	flush_workqueue(gtp_esd_check_workqueue);
 	destroy_workqueue(gtp_esd_check_workqueue);
 #endif
@@ -2256,6 +2351,16 @@ static int goodix_ts_suspend(struct device *dev)
 		if (ret < 0)
 			dev_err(&ts->client->dev, "GTP early suspend failed.\n");
 	}
+    /*-->add by kyle*/
+    if (ts->ts_pinctrl) {
+        ret = pinctrl_select_state(ts->ts_pinctrl,
+            ts->pinctrl_state_suspend);
+        if (ret < 0) {
+            dev_err(dev, "Cannot get idle pinctrl state %d\n", ret);
+        }
+    }
+    /*<--add by kyle*/
+
 	/* to avoid waking up while not sleeping,
 	 * delay 48 + 10ms to ensure reliability
 	 */
@@ -2285,6 +2390,16 @@ static int goodix_ts_resume(struct device *dev)
 	}
 
 	mutex_lock(&ts->lock);
+    /*-->add by kyle*/
+    if(ts->ts_pinctrl){
+        ret = pinctrl_select_state(ts->ts_pinctrl,
+                ts->pinctrl_state_active);
+        if(ret < 0){
+            dev_err(dev, "==>Cannot get active pinctrl state\n");
+        }
+    }
+    msleep(10);
+    /*<--add by kyle*/
 	ret = gtp_wakeup_sleep(ts);
 
 	if (ts->pdata->slide_wakeup)
