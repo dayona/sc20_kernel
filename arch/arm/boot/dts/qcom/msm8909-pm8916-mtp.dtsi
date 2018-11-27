@@ -107,10 +107,6 @@
 	qcom,mdss-dsi-pwm-gpio = <&pm8916_mpps 4 0>;
 };
 
-&dsi_vdash_jd9366_800p_video {
-	qcom,mdss-dsi-pwm-gpio = <&pm8916_mpps 4 0>;
-};
-
 &dsi_auo_qvga_cmd {
         qcom,mdss-dsi-pwm-gpio = <&pm8916_mpps 4 0>;
 };
