@@ -69,47 +69,40 @@
 	};
 
 	i2c@78b9000 { /* BLSP1 QUP5 */
-		goodix@5d {
-			compatible = "goodix,gt9xx";
-			reg = <0x5d>;
+		focaltech@38 {
+			compatible = "focaltech,5x06";
+			reg = <0x38>;
 			interrupt-parent = <&msm_gpio>;
-			interrupts = <13 0x2008>;
-			reset-gpios = <&msm_gpio 12 0x0>;
-			interrupt-gpios = <&msm_gpio 13 0x2008>;
-			power-gpios = <&msm_gpio 23 0x0>;
-			vcc-i2c-supply = <&pm8909_l6>;
-			goodix,panel-coords = <0 0 719 1405>;
-			goodix,display-coords = <0 0 719 1279>;
-			goodix,button-map= <139 172 158>;
-			goodix,enable-power-off;
-			//goodix,product-id = "9147";       joseph modified  20160309
-			goodix,fw_name = "gtp_fw.bin";
-			pinctrl-names = "pmx_ts_active","pmx_ts_suspend";
+			interrupts = <13 0x2>;
+			vdd-supply = <&pm8909_l17>;
+			vcc_i2c-supply = <&pm8909_l6>;
+			/* pins used by touchscreen */
+			pinctrl-names = "pmx_ts_active","pmx_ts_suspend","pmx_ts_release";
 			pinctrl-0 = <&ts_int_active &ts_reset_active>;
 			pinctrl-1 = <&ts_int_suspend &ts_reset_suspend>;
-			goodix,cfg-data0 = [
-			44 DA 02 05 05 05 35 C1 01 09
-			28 08 48 35 03 05 00 00 FF 7F
-			10 50 85 14 17 1A 14 92 00 0A
-			31 2F D3 07 03 00 00 A2 33 1D
-			00 01 00 00 00 1E 00 09 10 00
-			2A 1E 50 94 C5 02 00 0E 00 04
-			B1 21 00 96 28 00 7F 31 00 6F
-			3B 00 60 48 00 60 10 30 48 00
-			F0 4A 3A FF EF 27 00 00 00 00
-			00 01 1C 19 17 0F 01 00 01 0F
-			0F 03 04 10 42 8F 0F 19 00 00
-			46 37 08 0A 0C 0E 10 12 14 16
-			18 1A 00 00 00 00 00 00 00 00
-			00 00 00 00 00 00 00 00 00 00
-			00 00 08 20 0A 1F 0C 1E 0E 1D
-			22 05 24 04 28 00 29 02 2A 06
-			00 00 00 00 00 00 00 00 00 00
-			00 FF FF FF FF FF FF FF FF AF
-			FF FF FF FF 87 01
-			];
-			goodix,have-touch-key;
-			goodix,driver-send-cfg;
+			pinctrl-2 = <&ts_release>;
+			focaltech,name = "ft6436";
+			focaltech,family-id = <0x36>;
+			focaltech,reset-gpio = <&msm_gpio 12 0x0>;
+			focaltech,irq-gpio = <&msm_gpio 13 0x0>;
+			focaltech,display-coords = <0 0 480 854>;
+			focaltech,panel-coords = <0 0 480 950>;
+			focaltech,no-force-update;
+			focaltech,i2c-pull-up;
+			focaltech,group-id = <1>;
+			focaltech,hard-reset-delay-ms = <20>;
+			focaltech,soft-reset-delay-ms = <200>;
+			focaltech,num-max-touches = <2>;
+			focaltech,fw-delay-aa-ms = <30>;
+			focaltech,fw-delay-55-ms = <30>;
+			focaltech,fw-upgrade-id1 = <0x79>;
+			focaltech,fw-upgrade-id2 = <0x18>;
+			focaltech,fw-delay-readid-ms = <10>;
+			focaltech,fw-delay-era-flsh-ms = <2000>;
+			focaltech,fw-auto-cal;
+			focaltech,ignore-id-check;
+			focaltech,gesture-support;
+			focaltech,resume-in-workqueue;
 		};
 	};
 
