@@ -533,7 +533,10 @@
 };
 
 &dsi_ili9881c_720p_video {
-      
+        qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_pwm";
+        qcom,mdss-dsi-bl-pmic-pwm-frequency = <100>;
+        qcom,mdss-dsi-bl-pmic-bank-select = <0>;
+        qcom,mdss-dsi-pwm-gpio = <&pm8909_mpps 2 0>;
         qcom,cont-splash-enabled;
 };
 
