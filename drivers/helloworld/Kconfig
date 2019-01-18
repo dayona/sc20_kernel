@@ -1,0 +1,6 @@
+config HELLO_MOD
+	tristate "Hello World Module"
+	default m
+	depends on MODULES
+	help
+	  This module will write Hello Kernel World to the Kernel Message Buffer
